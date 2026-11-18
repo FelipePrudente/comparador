@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparador de IDs por Dia</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-hover: #f8fafc;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --warning: #d97706;
+      --warning-bg: #fffbeb;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    header {
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 0.9rem;
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius);
+      padding: 0.6rem 1.1rem;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--surface-hover);
+    }
+
+    .btn-danger {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .days-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .day-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+    }
+
+    .day-card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .day-card-header label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .day-card-header input[type="date"] {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 0.45rem 0.65rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .day-card-header .btn-danger {
+      margin-left: auto;
+    }
+
+    .id-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .id-field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.4rem;
+    }
+
+    .id-field label .count {
+      font-weight: 400;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+    }
+
+    .id-field.ausentes label {
+      color: var(--danger);
+    }
+
+    .id-field.excedentes label {
+      color: var(--success);
+    }
+
+    .day-card textarea {
+      width: 100%;
+      min-height: 120px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      padding: 0.75rem;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .day-card textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .day-card textarea::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    #results {
+      display: none;
+    }
+
+    #results.visible {
+      display: block;
+    }
+
+    #results h2 {
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .summary-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .summary-card .number {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--warning);
+    }
+
+    .summary-card .label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .result-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .result-section-header {
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.25rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .result-section-header.found {
+      background: #f0fdf4;
+    }
+
+    .result-section-header.not-found {
+      background: #fef2f2;
+    }
+
+    .result-section-header.extra {
+      background: #fffbeb;
+    }
+
+    .result-section-header .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 20px;
+      color: #ffffff;
+    }
+
+    .result-section-header.found .badge {
+      background: var(--success);
+    }
+
+    .result-section-header.not-found .badge {
+      background: var(--danger);
+    }
+
+    .result-section-header.extra .badge {
+      background: var(--warning);
+    }
+
+    .pair-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 1.5rem 0 0.75rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    .pair-title:first-child {
+      margin-top: 0;
+    }
+
+    .status-found {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .status-not-found {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .result-table th {
+      text-align: left;
+      padding: 0.65rem 1.25rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+      background: #f8fafc;
+    }
+
+    .result-table td {
+      padding: 0.6rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+    }
+
+    .result-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .result-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    .found-days {
+      color: var(--success);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .no-issues {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+      color: var(--success);
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar input {
+      flex: 1;
+      min-width: 200px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 0.55rem 0.85rem;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .filter-bar input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    @media (max-width: 700px) {
+      .id-fields {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Comparador de IDs por Dia</h1>
+      <p>Cole os <strong>ausentes</strong> e <strong>excedentes</strong> de cada dia. O sistema busca cada matéria ausente em <strong>todos os dias cadastrados</strong> que possuem excedentes — não apenas no dia seguinte.</p>
+    </header>
+
+    <div class="toolbar">
+      <button class="btn-primary" id="addDay">+ Adicionar dia</button>
+      <button class="btn-secondary" id="analyze">Analisar</button>
+      <button class="btn-secondary" id="clearAll">Limpar tudo</button>
+    </div>
+
+    <div class="days-grid" id="daysGrid"></div>
+
+    <div id="results">
+      <h2>Resultado da análise</h2>
+      <div class="summary-cards" id="summaryCards"></div>
+      <div class="filter-bar">
+        <input type="text" id="filterInput" placeholder="Filtrar por ID...">
+      </div>
+      <div id="resultsContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'comparador-ids-dias';
+    let dayCounter = 0;
+    let lastResults = null;
+    let saveTimeout = null;
+
+    function formatDateBR(dateStr) {
+      if (!dateStr) return 'Sem data';
+      const [y, m, d] = dateStr.split('-');
+      return `${d}/${m}/${y}`;
+    }
+
+    function parseIds(text) {
+      if (!text || !text.trim()) return [];
+      return [...new Set(
+        text
+          .split(/[\n,;\t]+/)
+          .map(id => id.trim())
+          .filter(id => id.length > 0)
+      )];
+    }
+
+    function saveToStorage() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        const cards = document.querySelectorAll('.day-card');
+        const days = [];
+
+        cards.forEach(card => {
+          const dayId = Number(card.dataset.dayId);
+          days.push({
+            dayId,
+            date: document.getElementById(`date-${dayId}`).value,
+            ausentes: document.getElementById(`ausentes-${dayId}`).value,
+            excedentes: document.getElementById(`excedentes-${dayId}`).value
+          });
+        });
+
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            dayCounter,
+            days,
+            filter: document.getElementById('filterInput').value
+          }));
+        } catch (e) {
+          console.warn('Não foi possível salvar no navegador:', e);
+        }
+      }, 300);
+    }
+
+    function loadFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return false;
+
+        const data = JSON.parse(raw);
+        if (!data.days || data.days.length === 0) return false;
+
+        dayCounter = data.dayCounter || 0;
+        const grid = document.getElementById('daysGrid');
+        grid.innerHTML = '';
+
+        data.days.forEach(day => {
+          grid.appendChild(createDayCard(day));
+        });
+
+        if (data.filter) {
+          document.getElementById('filterInput').value = data.filter;
+        }
+
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    function createDayCard(dayData = {}) {
+      const opts = typeof dayData === 'string' ? { date: dayData } : dayData;
+      const {
+        date = '',
+        ausentes = '',
+        excedentes = '',
+        dayId: existingId = null
+      } = opts;
+
+      let id;
+      if (existingId !== null) {
+        id = existingId;
+        dayCounter = Math.max(dayCounter, id);
+      } else {
+        dayCounter++;
+        id = dayCounter;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'day-card';
+      card.dataset.dayId = id;
+
+      const today = new Date();
+      const dateValue = date || today.toISOString().split('T')[0];
+
+      card.innerHTML = `
+        <div class="day-card-header">
+          <label for="date-${id}">Data:</label>
+          <input type="date" id="date-${id}" value="${dateValue}">
+          <button class="btn-danger" data-remove="${id}">Remover</button>
+        </div>
+        <div class="id-fields">
+          <div class="id-field ausentes">
+            <label for="ausentes-${id}">
+              IDs ausentes
+              <span class="count" id="count-ausentes-${id}">0</span>
+            </label>
+            <textarea
+              id="ausentes-${id}"
+              placeholder="IDs que faltaram neste dia"
+            >${escapeHtml(ausentes)}</textarea>
+          </div>
+          <div class="id-field excedentes">
+            <label for="excedentes-${id}">
+              IDs excedentes
+              <span class="count" id="count-excedentes-${id}">0</span>
+            </label>
+            <textarea
+              id="excedentes-${id}"
+              placeholder="IDs excedentes neste dia"
+            >${escapeHtml(excedentes)}</textarea>
+          </div>
+        </div>
+      `;
+
+      const dateInput = card.querySelector(`#date-${id}`);
+      const ausentesTa = card.querySelector(`#ausentes-${id}`);
+      const excedentesTa = card.querySelector(`#excedentes-${id}`);
+      const countAusentes = card.querySelector(`#count-ausentes-${id}`);
+      const countExcedentes = card.querySelector(`#count-excedentes-${id}`);
+
+      function updateCounts() {
+        countAusentes.textContent = parseIds(ausentesTa.value).length;
+        countExcedentes.textContent = parseIds(excedentesTa.value).length;
+      }
+
+      updateCounts();
+
+      dateInput.addEventListener('change', saveToStorage);
+      ausentesTa.addEventListener('input', () => {
+        updateCounts();
+        saveToStorage();
+      });
+      excedentesTa.addEventListener('input', () => {
+        updateCounts();
+        saveToStorage();
+      });
+
+      card.querySelector('[data-remove]').addEventListener('click', () => {
+        card.remove();
+        if (document.querySelectorAll('.day-card').length === 0) {
+          document.getElementById('daysGrid').appendChild(createDayCard());
+        }
+        saveToStorage();
+      });
+
+      return card;
+    }
+
+    function getDaysData() {
+      const cards = document.querySelectorAll('.day-card');
+      const days = [];
+
+      cards.forEach(card => {
+        const dayId = card.dataset.dayId;
+        const date = document.getElementById(`date-${dayId}`).value;
+        const ausentes = parseIds(document.getElementById(`ausentes-${dayId}`).value);
+        const excedentes = parseIds(document.getElementById(`excedentes-${dayId}`).value);
+        days.push({
+          dayId,
+          date,
+          dateLabel: formatDateBR(date),
+          ausentes,
+          excedentes,
+          ausentesSet: new Set(ausentes),
+          excedentesSet: new Set(excedentes)
+        });
+      });
+
+      return days.sort((a, b) => a.date.localeCompare(b.date));
+    }
+
+    function findExcedenteDays(sourceDay, daysWithExcedentes, id) {
+      return daysWithExcedentes
+        .filter(d => d.dayId !== sourceDay.dayId && d.excedentesSet.has(id))
+        .sort((a, b) => a.date.localeCompare(b.date))
+        .map(d => d.dateLabel);
+    }
+
+    function analyze() {
+      const days = getDaysData();
+      const daysWithAusentes = days.filter(d => d.ausentes.length > 0);
+      const daysWithExcedentes = days.filter(d => d.excedentes.length > 0);
+
+      if (daysWithAusentes.length === 0) {
+        alert('Cadastre pelo menos um dia com matérias ausentes.');
+        return;
+      }
+
+      if (daysWithExcedentes.length === 0) {
+        alert('Cadastre pelo menos um dia com matérias excedentes.');
+        return;
+      }
+
+      const allAusentesSet = new Set();
+      days.forEach(d => d.ausentes.forEach(id => allAusentesSet.add(id)));
+
+      const dayResults = daysWithAusentes.map(source => {
+        const found = [];
+        const notFound = [];
+
+        source.ausentes.forEach(id => {
+          const foundOn = findExcedenteDays(source, daysWithExcedentes, id);
+          if (foundOn.length > 0) {
+            found.push({ id, foundOn });
+          } else {
+            notFound.push(id);
+          }
+        });
+
+        return {
+          fromDate: source.date,
+          fromLabel: source.dateLabel,
+          found,
+          notFound
+        };
+      });
+
+      const extraResults = daysWithExcedentes
+        .map(day => ({
+          dayDate: day.date,
+          dayLabel: day.dateLabel,
+          extras: day.excedentes.filter(id => !allAusentesSet.has(id))
+        }))
+        .filter(e => e.extras.length > 0);
+
+      lastResults = { dayResults, extraResults };
+      renderResults(lastResults);
+    }
+
+    function renderResults({ dayResults, extraResults }) {
+      const resultsEl = document.getElementById('results');
+      const summaryEl = document.getElementById('summaryCards');
+      const contentEl = document.getElementById('resultsContent');
+      const filter = document.getElementById('filterInput').value.trim().toLowerCase();
+
+      resultsEl.classList.add('visible');
+
+      const matchesFilter = id => !filter || id.toLowerCase().includes(filter);
+
+      const totalFound = dayResults.reduce((s, d) => s + d.found.filter(f => matchesFilter(f.id)).length, 0);
+      const totalNotFound = dayResults.reduce((s, d) => s + d.notFound.filter(matchesFilter).length, 0);
+      const totalExtras = extraResults.reduce((s, e) => s + e.extras.filter(matchesFilter).length, 0);
+
+      summaryEl.innerHTML = `
+        <div class="summary-card">
+          <div class="number">${dayResults.length}</div>
+          <div class="label">Dias com ausentes</div>
+        </div>
+        <div class="summary-card">
+          <div class="number" style="color: var(--success)">${totalFound}</div>
+          <div class="label">Encontrados nos excedentes</div>
+        </div>
+        <div class="summary-card">
+          <div class="number" style="color: var(--danger)">${totalNotFound}</div>
+          <div class="label">Ainda não encontrados</div>
+        </div>
+        <div class="summary-card">
+          <div class="number">${totalExtras}</div>
+          <div class="label">Excedentes sem correspondência</div>
+        </div>
+      `;
+
+      const hasVisible = totalFound + totalNotFound + totalExtras > 0;
+
+      if (!hasVisible) {
+        contentEl.innerHTML = filter
+          ? '<div class="empty-state"><div class="icon">🔍</div><p>Nenhum resultado para o filtro informado.</p></div>'
+          : '<div class="no-issues">Nenhum dado para exibir.</div>';
+        return;
+      }
+
+      let html = '';
+
+      dayResults.forEach(day => {
+        const found = day.found.filter(f => matchesFilter(f.id));
+        const notFound = day.notFound.filter(matchesFilter);
+
+        if (found.length + notFound.length === 0) return;
+
+        html += `<h3 class="pair-title">Ausentes em ${escapeHtml(day.fromLabel)}</h3>`;
+
+        if (found.length > 0) {
+          html += `
+            <div class="result-section">
+              <div class="result-section-header found">
+                Encontrados nos excedentes de outros dias
+                <span class="badge">${found.length}</span>
+              </div>
+              <table class="result-table">
+                <thead><tr><th>ID</th><th>Encontrado em</th></tr></thead>
+                <tbody>
+                  ${found.map(f => `
+                    <tr>
+                      <td>${escapeHtml(f.id)}</td>
+                      <td class="status-found">Ausente em ${escapeHtml(day.fromLabel)}, encontrado em ${f.foundOn.map(escapeHtml).join(', ')}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+
+        if (notFound.length > 0) {
+          html += `
+            <div class="result-section">
+              <div class="result-section-header not-found">
+                Não encontrados em nenhum dia com excedentes
+                <span class="badge">${notFound.length}</span>
+              </div>
+              <table class="result-table">
+                <thead><tr><th>ID</th><th>Status</th></tr></thead>
+                <tbody>
+                  ${notFound.map(id => `
+                    <tr>
+                      <td>${escapeHtml(id)}</td>
+                      <td class="status-not-found">Ausente em ${escapeHtml(day.fromLabel)} — não apareceu nos excedentes de nenhum dia cadastrado</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }
+      });
+
+      extraResults.forEach(extra => {
+        const extras = extra.extras.filter(matchesFilter);
+        if (extras.length === 0) return;
+
+        html += `<h3 class="pair-title">Excedentes em ${escapeHtml(extra.dayLabel)}</h3>`;
+        html += `
+          <div class="result-section">
+            <div class="result-section-header extra">
+              Sem correspondência em nenhum dia com ausentes
+              <span class="badge">${extras.length}</span>
+            </div>
+            <table class="result-table">
+              <thead><tr><th>ID</th><th>Observação</th></tr></thead>
+              <tbody>
+                ${extras.map(id => `
+                  <tr>
+                    <td>${escapeHtml(id)}</td>
+                    <td>Excedente sem ausente correspondente em nenhum dia cadastrado</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      });
+
+      contentEl.innerHTML = html;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    document.getElementById('addDay').addEventListener('click', () => {
+      document.getElementById('daysGrid').appendChild(createDayCard());
+      saveToStorage();
+    });
+
+    document.getElementById('analyze').addEventListener('click', analyze);
+
+    document.getElementById('clearAll').addEventListener('click', () => {
+      if (!confirm('Limpar todos os dias e resultados?')) return;
+      localStorage.removeItem(STORAGE_KEY);
+      document.getElementById('daysGrid').innerHTML = '';
+      document.getElementById('results').classList.remove('visible');
+      document.getElementById('filterInput').value = '';
+      lastResults = null;
+      dayCounter = 0;
+      createInitialDays();
+    });
+
+    document.getElementById('filterInput').addEventListener('input', () => {
+      saveToStorage();
+      if (lastResults) renderResults(lastResults);
+    });
+
+    function createInitialDays() {
+      const grid = document.getElementById('daysGrid');
+      const today = new Date();
+
+      for (let i = 1; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        grid.appendChild(createDayCard(d.toISOString().split('T')[0]));
+      }
+
+      saveToStorage();
+    }
+
+    if (!loadFromStorage()) {
+      createInitialDays();
+    }
+  </script>
+</body>
+</html>
